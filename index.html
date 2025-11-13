@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="it">
+<head>
+    <meta charset="utf-8">
+    <title>Visualizzazione voti esame</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.1.2/dist/chartjs-plugin-annotation.min.js"></script>
+
+    <!-- PapaParse -->
+    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<header>
+    <h1>Visualizzazione voti esame <span id="datasetInfo" class="pill">—</span></h1>
+    <p>Distribuzione globale e analisi per gruppi di domande.</p>
+</header>
+
+<div class="container">
+    <div class="controls">
+        <label for="matricola">Inserisci matricola</label>
+        <input id="matricola" type="text" placeholder="es. 123456" autocomplete="off">
+        <ul id="suggestions"></ul>
+        <div class="legend" id="legendStatus">Nessuna matricola selezionata.</div>
+    </div>
+
+    <div class="grid">
+        <div class="panel">
+            <h2>Distribuzione dei voti (Results)</h2>
+            <canvas id="histChart"></canvas>
+            <div class="legend">Istogramma con media (verde) e voto selezionato (rosso).</div>
+        </div>
+
+        <div class="panel">
+            <h2>Domande aperte 1–4</h2>
+            <canvas id="openScatter"></canvas>
+            <div class="legend">La linea verde è la media.</div>
+        </div>
+
+        <div class="panel">
+            <h2>Vero/Falso con giustificazione 5–12</h2>
+            <canvas id="vfScatter"></canvas>
+            <div class="legend">La linea verde è la media.</div>
+        </div>
+    </div>
+</div>
+
+<footer>
+    <p>Created By RM</p>
+</footer>
+
+<script src="js/main.js"></script>
+</body>
+</html>

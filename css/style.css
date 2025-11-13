@@ -1,0 +1,117 @@
+:root {
+    color-scheme: dark;
+    --bg: #0b0b0d;
+    --panel: #141418;
+    --text: #d6d6e0;
+    --muted: #8b8b94;
+    --ok: #34d399;
+    --grid: #1f1f27;
+    --accent: #7dd3fc;
+    --danger: #f87171;
+}
+
+html, body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font: 14px/1.45 system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+}
+
+header {
+    padding: 20px;
+    border-bottom: 1px solid var(--grid);
+}
+
+header h1 { margin: 0 0 6px; font-size: 20px; }
+header p { margin: 2px 0; color: var(--muted); }
+
+.container {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
+    padding: 16px;
+}
+
+.controls {
+    background: var(--panel);
+    border: 1px solid var(--grid);
+    border-radius: 12px;
+    padding: 14px;
+    position: relative;
+}
+
+.controls label { display:block; margin-bottom: 6px; color: var(--muted); }
+
+.controls input {
+    width: 260px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: 1px solid var(--grid);
+    background: #0e0e12;
+    color: var(--text);
+    outline: none;
+}
+
+#suggestions {
+    position: absolute;
+    top: 70px;
+    left: 14px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    background: var(--panel);
+    border: 1px solid var(--grid);
+    border-radius: 8px;
+    width: 260px;
+    z-index: 10;
+    display: none;
+}
+
+#suggestions li {
+    padding: 8px 10px;
+    cursor: pointer;
+    color: var(--text);
+}
+
+#suggestions li:hover {
+    background: var(--grid);
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
+}
+
+@media (min-width: 1000px) {
+    .grid { grid-template-columns: 1fr 1fr; }
+}
+
+.panel {
+    background: var(--panel);
+    border: 1px solid var(--grid);
+    border-radius: 12px;
+    padding: 14px;
+}
+
+.panel h2 { margin: 0 0 10px; font-size: 16px; }
+.legend { color: var(--muted); font-size: 12px; margin-top: 6px; }
+canvas { width: 100%; height: 420px; }
+
+footer {
+    padding: 10px 16px 24px;
+    color: var(--muted);
+    font-size: 12px;
+    text-align: center;
+}
+
+.pill {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: #0f172a;
+    border: 1px solid var(--grid);
+    color: var(--muted);
+    font-size: 12px;
+    margin-left: 6px;
+}
