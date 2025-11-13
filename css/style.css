@@ -10,12 +10,21 @@
     --danger: #f87171;
 }
 
+/* ---------------------------------------------------------
+   Base layout
+--------------------------------------------------------- */
+
 html, body {
     margin: 0;
     background: var(--bg);
     color: var(--text);
     font: 14px/1.45 system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+    padding-bottom: 20px; /* avoids iPhone bottom bar hiding content */
 }
+
+/* ---------------------------------------------------------
+   Header
+--------------------------------------------------------- */
 
 header {
     padding: 20px;
@@ -25,12 +34,26 @@ header {
 header h1 { margin: 0 0 6px; font-size: 20px; }
 header p { margin: 2px 0; color: var(--muted); }
 
+/* Smaller screens */
+@media (max-width: 500px) {
+    header h1 { font-size: 18px; }
+    header p { font-size: 13px; }
+}
+
+/* ---------------------------------------------------------
+   Main container
+--------------------------------------------------------- */
+
 .container {
     display: grid;
     grid-template-columns: 1fr;
     gap: 16px;
     padding: 16px;
 }
+
+/* ---------------------------------------------------------
+   Controls (search + suggestions)
+--------------------------------------------------------- */
 
 .controls {
     background: var(--panel);
@@ -40,42 +63,55 @@ header p { margin: 2px 0; color: var(--muted); }
     position: relative;
 }
 
-.controls label { display:block; margin-bottom: 6px; color: var(--muted); }
+.controls label {
+    display: block;
+    margin-bottom: 6px;
+    color: var(--muted);
+}
 
 .controls input {
-    width: 260px;
-    padding: 10px 12px;
+    width: 100%;
+    max-width: 350px;
+    padding: 12px 14px;
     border-radius: 10px;
     border: 1px solid var(--grid);
     background: #0e0e12;
     color: var(--text);
+    font-size: 16px; /* prevents iOS zoom */
     outline: none;
 }
 
+/* Suggestions dropdown */
 #suggestions {
     position: absolute;
     top: 70px;
-    left: 14px;
+    left: 0;
+    width: 100%;
+    max-width: 350px;
     list-style: none;
     margin: 0;
     padding: 0;
     background: var(--panel);
     border: 1px solid var(--grid);
     border-radius: 8px;
-    width: 260px;
     z-index: 10;
     display: none;
 }
 
 #suggestions li {
-    padding: 8px 10px;
+    padding: 12px 14px;
     cursor: pointer;
     color: var(--text);
+    font-size: 16px;
 }
 
 #suggestions li:hover {
     background: var(--grid);
 }
+
+/* ---------------------------------------------------------
+   Layout grid (panels)
+--------------------------------------------------------- */
 
 .grid {
     display: grid;
@@ -83,9 +119,16 @@ header p { margin: 2px 0; color: var(--muted); }
     gap: 16px;
 }
 
-@media (min-width: 1000px) {
-    .grid { grid-template-columns: 1fr 1fr; }
+/* 2-column layout only on screens >= 700px */
+@media (min-width: 700px) {
+    .grid {
+        grid-template-columns: 1fr 1fr;
+    }
 }
+
+/* ---------------------------------------------------------
+   Panels
+--------------------------------------------------------- */
 
 .panel {
     background: var(--panel);
@@ -94,9 +137,38 @@ header p { margin: 2px 0; color: var(--muted); }
     padding: 14px;
 }
 
-.panel h2 { margin: 0 0 10px; font-size: 16px; }
-.legend { color: var(--muted); font-size: 12px; margin-top: 6px; }
-canvas { width: 100%; height: 420px; }
+.panel h2 {
+    margin: 0 0 10px;
+    font-size: 16px;
+    word-break: break-word; /* prevents overflow */
+}
+
+.legend {
+    color: var(--muted);
+    font-size: 12px;
+    margin-top: 6px;
+}
+
+/* ---------------------------------------------------------
+   Charts responsive scaling
+--------------------------------------------------------- */
+
+canvas {
+    width: 100% !important;
+    height: auto !important;
+    aspect-ratio: 1 / 1; /* keeps square ratio on mobile */
+}
+
+@media (min-width: 700px) {
+    canvas {
+        aspect-ratio: unset;
+        height: 420px !important;
+    }
+}
+
+/* ---------------------------------------------------------
+   Footer
+--------------------------------------------------------- */
 
 footer {
     padding: 10px 16px 24px;
@@ -104,6 +176,10 @@ footer {
     font-size: 12px;
     text-align: center;
 }
+
+/* ---------------------------------------------------------
+   Meta badge
+--------------------------------------------------------- */
 
 .pill {
     display: inline-block;

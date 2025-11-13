@@ -299,7 +299,9 @@ function updateHighlight() {
     const id = currentID;
     const rec = rows.find(r => String(r.id) === String(id));
 
-    // linea rossa nella distribuzione
+    // -----------------------------------------------------
+    // HISTOGRAM red line
+    // -----------------------------------------------------
     const ann = charts.hist.options.plugins.annotation.annotations;
     if (rec) {
         const idx = closestBinIndex(rec.total);
@@ -316,24 +318,26 @@ function updateHighlight() {
     }
     charts.hist.update();
 
-    // punti rossi in primo piano nei due scatter
+
+    // -----------------------------------------------------
+    // SCATTERPLOTS: keep ONLY the selected student's points
+    // -----------------------------------------------------
     const updateScatter = (chart) => {
-        if (!chart) return;
-        if (!chart._allPoints) return;
+        if (!chart || !chart._allPoints) return;
 
         if (!rec) {
-            // reset: ripristina tutti i punti e svuota selezionati
-            chart.data.datasets[0].data = chart._allPoints.slice();
-            chart.data.datasets[2].data = [];
+            // reset → restore all points
+            chart.data.datasets[0].data = chart._allPoints.slice();  // all points
+            chart.data.datasets[2].data = [];                        // selected empty
             chart.update();
             return;
         }
 
-        const all = chart._allPoints;
-        const sel = all.filter(p => String(p.id) === String(id));
-        const rest = all.filter(p => String(p.id) !== String(id));
-        chart.data.datasets[0].data = rest;
-        chart.data.datasets[2].data = sel;
+        // student points
+        const sel = chart._allPoints.filter(p => String(p.id) === String(id));
+
+        chart.data.datasets[0].data = [];   // remove background points
+        chart.data.datasets[2].data = sel;  // keep only selected
         chart.update();
     };
 
