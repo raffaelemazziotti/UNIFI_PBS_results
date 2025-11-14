@@ -1,3 +1,7 @@
+/* ---------------------------------------------------------
+   Color scheme & theme variables
+--------------------------------------------------------- */
+
 :root {
     color-scheme: dark;
     --bg: #0b0b0d;
@@ -19,7 +23,7 @@ html, body {
     background: var(--bg);
     color: var(--text);
     font: 14px/1.45 system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
-    padding-bottom: 20px; /* avoids iPhone bottom bar hiding content */
+    padding-bottom: 20px; /* avoid iPhone bottom bar overlap */
 }
 
 /* ---------------------------------------------------------
@@ -32,12 +36,11 @@ header {
 }
 
 header h1 { margin: 0 0 6px; font-size: 20px; }
-header p { margin: 2px 0; color: var(--muted); }
+header p  { margin: 2px 0; color: var(--muted); }
 
-/* Smaller screens */
 @media (max-width: 500px) {
     header h1 { font-size: 18px; }
-    header p { font-size: 13px; }
+    header p  { font-size: 13px; }
 }
 
 /* ---------------------------------------------------------
@@ -52,7 +55,7 @@ header p { margin: 2px 0; color: var(--muted); }
 }
 
 /* ---------------------------------------------------------
-   Controls (search + suggestions)
+   Controls (matricola input + suggestions)
 --------------------------------------------------------- */
 
 .controls {
@@ -73,36 +76,36 @@ header p { margin: 2px 0; color: var(--muted); }
     width: 100%;
     max-width: 350px;
     padding: 12px 14px;
+    font-size: 16px; /* prevents iOS zoom */
     border-radius: 10px;
     border: 1px solid var(--grid);
     background: #0e0e12;
     color: var(--text);
-    font-size: 16px; /* prevents iOS zoom */
     outline: none;
 }
 
-/* Suggestions dropdown */
+/* Suggestions */
 #suggestions {
     position: absolute;
     top: 70px;
     left: 0;
     width: 100%;
     max-width: 350px;
-    list-style: none;
+    z-index: 10;
+    display: none;
     margin: 0;
     padding: 0;
+    list-style: none;
     background: var(--panel);
     border: 1px solid var(--grid);
     border-radius: 8px;
-    z-index: 10;
-    display: none;
 }
 
 #suggestions li {
     padding: 12px 14px;
-    cursor: pointer;
-    color: var(--text);
     font-size: 16px;
+    color: var(--text);
+    cursor: pointer;
 }
 
 #suggestions li:hover {
@@ -110,7 +113,7 @@ header p { margin: 2px 0; color: var(--muted); }
 }
 
 /* ---------------------------------------------------------
-   Layout grid (panels)
+   Panel grid
 --------------------------------------------------------- */
 
 .grid {
@@ -119,11 +122,8 @@ header p { margin: 2px 0; color: var(--muted); }
     gap: 16px;
 }
 
-/* 2-column layout only on screens >= 700px */
 @media (min-width: 700px) {
-    .grid {
-        grid-template-columns: 1fr 1fr;
-    }
+    .grid { grid-template-columns: 1fr 1fr; }
 }
 
 /* ---------------------------------------------------------
@@ -140,29 +140,29 @@ header p { margin: 2px 0; color: var(--muted); }
 .panel h2 {
     margin: 0 0 10px;
     font-size: 16px;
-    word-break: break-word; /* prevents overflow */
+    word-break: break-word;
 }
 
 .legend {
-    color: var(--muted);
-    font-size: 12px;
     margin-top: 6px;
+    font-size: 12px;
+    color: var(--muted);
 }
 
 /* ---------------------------------------------------------
-   Charts responsive scaling
+   Charts — responsive & crisp
 --------------------------------------------------------- */
 
 canvas {
     width: 100% !important;
     height: auto !important;
-    aspect-ratio: 1 / 1; /* keeps square ratio on mobile */
 }
 
-@media (min-width: 700px) {
+/* Mobile: enforce stable aspect ratio */
+@media (max-width: 700px) {
     canvas {
-        aspect-ratio: unset;
-        height: 420px !important;
+        aspect-ratio: 1.5 / 1;  /* slightly wider than tall */
+        max-height: 70vw;       /* prevents tall stretching */
     }
 }
 
@@ -172,9 +172,9 @@ canvas {
 
 footer {
     padding: 10px 16px 24px;
-    color: var(--muted);
     font-size: 12px;
     text-align: center;
+    color: var(--muted);
 }
 
 /* ---------------------------------------------------------
@@ -184,10 +184,31 @@ footer {
 .pill {
     display: inline-block;
     padding: 2px 8px;
-    border-radius: 999px;
+    font-size: 12px;
     background: #0f172a;
     border: 1px solid var(--grid);
+    border-radius: 999px;
     color: var(--muted);
-    font-size: 12px;
     margin-left: 6px;
+}
+
+/* ---------------------------------------------------------
+   Student info (matricola + grade)
+--------------------------------------------------------- */
+
+.matricola-label {
+    font-size: 15px;
+    color: var(--muted);
+    margin-bottom: 4px;
+}
+
+.voto-label {
+    margin-top: 4px;
+    font-size: 26px;
+    font-weight: 600;
+    color: var(--ok);
+}
+
+.voto-label span {
+    color: var(--accent);
 }

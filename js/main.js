@@ -87,64 +87,58 @@ function buildHistogramChart() {
     const vals = rows.map(r => r.total);
     const mu = mean(vals);
     const { bins, counts, width } = buildHistogram(vals);
+
     const labels = bins.map(b => (b + width / 2).toFixed(1));
     histLabelsNumeric = bins.map(b => b + width / 2);
 
-    const meanIdx = closestBinIndex(mu);
-
-    charts.hist && charts.hist.destroy();
+    charts.hist?.destroy();
     charts.hist = new Chart(ctx, {
         type: 'bar',
         data: {
             labels,
-            datasets: [{
-                data: counts,
-                backgroundColor: 'rgba(125,211,252,0.25)',
-                borderColor: 'rgba(125,211,252,0.9)',
-                borderWidth: 1
-            }]
+            datasets: [
+                {
+                    label: 'Distribuzione',
+                    data: counts,
+                    backgroundColor: 'rgba(125,211,252,0.25)',
+                    borderColor: 'rgba(125,211,252,0.9)',
+                    borderWidth: 1
+                },
+                {
+                    label: 'Media',
+                    type: 'line',
+                    data: labels.map((_, i) => i === closestBinIndex(mu) ? counts[i] : null),
+                    borderColor: '#34d399',
+                    borderWidth: 3,
+                    pointRadius: 8,
+                    pointBackgroundColor: '#34d399'
+                },
+                {
+                    label: 'Studente',
+                    type: 'line',
+                    data: labels.map(() => null),      // we fill this later in updateHighlight
+                    borderColor: '#f87171',
+                    borderWidth: 0,
+                    pointRadius: 12,                   // bigger so it is visible
+                    pointBackgroundColor: '#f87171',
+                    pointBorderColor: '#ffffff',
+                    pointBorderWidth: 2
+                }
+            ]
         },
         options: {
             scales: {
-                x: {
-                    grid: { color: '#1f1f27' }
-                },
+                x: { grid: { color: '#1f1f27' } },
                 y: {
-                    grid: { color: '#1f1f27' },
-                    beginAtZero: true
+                    beginAtZero: true,
+                    grid: { color: '#1f1f27' }
                 }
             },
-            plugins: {
-                legend: { display: false },
-                annotation: {
-                    annotations: {
-                        meanLine: {
-                            type: 'line',
-                            xMin: meanIdx,
-                            xMax: meanIdx,
-                            borderColor: '#34d399',
-                            borderWidth: 2,
-                            label: {
-                                display: true,
-                                content: `media ${mu.toFixed(2)}`,
-                                color: '#34d399'
-                            },
-                            xScaleID: 'x'
-                        },
-                        studentLine: {
-                            type: 'line',
-                            borderColor: '#f87171',
-                            borderWidth: 3,
-                            display: false,
-                            label: { display: false },
-                            xScaleID: 'x'
-                        }
-                    }
-                }
-            }
+            plugins: { legend: { display: false } }
         }
     });
 }
+
 
 // ---------------------------------------------------------
 // SCATTER 1–4 e 5–12
@@ -258,9 +252,11 @@ function setupAutocomplete() {
         const term = input.value.trim();
         currentID = null;
         const rec = rows.find(r => r.id === term);
-        legend.textContent = rec
-            ? `Matricola: ${term} — Voto: ${rec.total}`
+        legend.innerHTML = rec
+            ? `<div class="matricola-label">Matricola ${term}</div>
+     <div class="voto-label">Voto: <span>${rec.total}</span></div>`
             : 'Nessuna matricola selezionata.';
+
         updateHighlight();
 
         if (term.length < 3) {
@@ -278,9 +274,10 @@ function setupAutocomplete() {
             list.style.display = 'none';
             currentID = input.value.trim();
             const rec = rows.find(r => r.id === currentID);
-            legend.textContent = rec
-                ? `Matricola: ${currentID} — Voto: ${rec.total}`
-                : `Matricola: ${currentID}`;
+            legend.innerHTML = rec
+                ? `<div class="matricola-label">Matricola ${currentID}</div>
+     <div class="voto-label">Voto: <span>${rec.total}</span></div>`
+                : `<div class="matricola-label">Matricola ${currentID}</div>`;
             updateHighlight();
         }
     });
@@ -299,45 +296,46 @@ function updateHighlight() {
     const id = currentID;
     const rec = rows.find(r => String(r.id) === String(id));
 
-    // -----------------------------------------------------
-    // HISTOGRAM red line
-    // -----------------------------------------------------
-    const ann = charts.hist.options.plugins.annotation.annotations;
+    // ---------------------------------------------------------
+    // HISTOGRAM: only show big red point on the student bin
+    // ---------------------------------------------------------
+    const dsStudent = charts.hist.data.datasets[2];  // red point dataset
+    const dsMean = charts.hist.data.datasets[1];     // green point dataset
+
     if (rec) {
         const idx = closestBinIndex(rec.total);
-        ann.studentLine.display = true;
-        ann.studentLine.xMin = idx;
-        ann.studentLine.xMax = idx;
-        ann.studentLine.label = {
-            display: true,
-            content: `tu: ${rec.total}`,
-            color: '#f87171'
-        };
+
+        dsStudent.data = charts.hist.data.labels.map((_, i) =>
+            i === idx ? charts.hist.data.datasets[0].data[i] : null
+        );
+
     } else {
-        ann.studentLine.display = false;
+        dsStudent.data = charts.hist.data.labels.map(() => null);
     }
+
     charts.hist.update();
 
 
-    // -----------------------------------------------------
-    // SCATTERPLOTS: keep ONLY the selected student's points
-    // -----------------------------------------------------
+    // ---------------------------------------------------------
+    // SCATTERPLOTS: show ONLY student’s points + mean line
+    // ---------------------------------------------------------
     const updateScatter = (chart) => {
         if (!chart || !chart._allPoints) return;
 
         if (!rec) {
-            // reset → restore all points
-            chart.data.datasets[0].data = chart._allPoints.slice();  // all points
+            // RESET: show all students again
+            chart.data.datasets[0].data = chart._allPoints.slice();  // background
             chart.data.datasets[2].data = [];                        // selected empty
             chart.update();
             return;
         }
 
-        // student points
-        const sel = chart._allPoints.filter(p => String(p.id) === String(id));
+        // ONLY selected student's points
+        const allPoints = chart._allPoints;
+        const sel = allPoints.filter(p => String(p.id) === String(id));
 
-        chart.data.datasets[0].data = [];   // remove background points
-        chart.data.datasets[2].data = sel;  // keep only selected
+        chart.data.datasets[0].data = [];   // remove all background students
+        chart.data.datasets[2].data = sel;  // keep only selected student
         chart.update();
     };
 
