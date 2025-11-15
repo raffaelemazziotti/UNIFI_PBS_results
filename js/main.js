@@ -248,44 +248,88 @@ function setupAutocomplete() {
     const list = document.getElementById('suggestions');
     const legend = document.getElementById('legendStatus');
 
+    function applyMatricola(id) {
+        currentID = id;
+        const rec = rows.find(r => r.id === id);
+
+        if (rec) {
+            legend.innerHTML = `
+                <div class="matricola-label">Matricola ${id}</div>
+                <div class="voto-label">Voto: <span>${rec.total}</span></div>
+            `;
+        } else {
+            legend.textContent = "Matricola non trovata";
+        }
+
+        updateHighlight();
+        list.style.display = 'none';
+    }
+
+    // Input typing
     input.addEventListener('input', () => {
         const term = input.value.trim();
+
+        // Reset but do not break enter behavior
         currentID = null;
         const rec = rows.find(r => r.id === term);
-        legend.innerHTML = rec
-            ? `<div class="matricola-label">Matricola ${term}</div>
-     <div class="voto-label">Voto: <span>${rec.total}</span></div>`
-            : 'Nessuna matricola selezionata.';
+
+        if (rec) {
+            legend.innerHTML = `
+                <div class="matricola-label">Matricola ${rec.id}</div>
+                <div class="voto-label">Voto: <span>${rec.total}</span></div>
+            `;
+        } else {
+            legend.textContent = "Nessuna matricola selezionata.";
+        }
 
         updateHighlight();
 
+        // Autocomplete suggestions
         if (term.length < 3) {
             list.style.display = 'none';
             return;
         }
+
         const matches = rows.filter(r => r.id.includes(term)).slice(0, 5);
-        list.innerHTML = matches.map(m => `<li>${m.id}</li>`).join('');
+
+        list.innerHTML = matches
+            .map(m => `<li>${m.id}</li>`)
+            .join('');
+
         list.style.display = matches.length ? 'block' : 'none';
     });
 
+    // Click selection from suggestions
     list.addEventListener('click', e => {
         if (e.target.tagName === 'LI') {
             input.value = e.target.textContent;
-            list.style.display = 'none';
-            currentID = input.value.trim();
-            const rec = rows.find(r => r.id === currentID);
-            legend.innerHTML = rec
-                ? `<div class="matricola-label">Matricola ${currentID}</div>
-     <div class="voto-label">Voto: <span>${rec.total}</span></div>`
-                : `<div class="matricola-label">Matricola ${currentID}</div>`;
-            updateHighlight();
+            applyMatricola(e.target.textContent);
         }
     });
 
+    // ENTER to search
+    input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            const term = input.value.trim();
+            const rec = rows.find(r => r.id === term);
+
+            if (rec) {
+                applyMatricola(term);
+            } else {
+                legend.textContent = "Matricola non trovata";
+            }
+        }
+    });
+
+    // Close suggestions when clicking outside
     document.addEventListener('click', e => {
-        if (!list.contains(e.target) && e.target !== input) list.style.display = 'none';
+        if (!list.contains(e.target) && e.target !== input) {
+            list.style.display = 'none';
+        }
     });
 }
+
 
 // ---------------------------------------------------------
 // EVIDENZIAZIONE
