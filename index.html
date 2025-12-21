@@ -1,56 +1,90 @@
 <!doctype html>
 <html lang="it">
 <head>
-    <meta charset="utf-8">
-    <title>Visualizzazione voti esame</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="utf-8">
+  <title>Risultati esame PBS</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.1.2/dist/chartjs-plugin-annotation.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 
-    <!-- PapaParse -->
-    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
-
-    <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
+
 <header>
-    <h1>Visualizzazione voti esame <span id="datasetInfo" class="pill">—</span></h1>
-    <p>Distribuzione globale e analisi per gruppi di domande.</p>
+  <h1>Risultati esame PBS <span id="datasetInfo" class="pill">—</span></h1>
+  <p>Modulo 1, Modulo 2 e Totale</p>
 </header>
 
 <div class="container">
-    <div class="controls">
-        <label for="matricola">Inserisci matricola</label>
-        <input id="matricola" type="text" placeholder="es. 123456" autocomplete="off">
-        <ul id="suggestions"></ul>
-        <div class="legend" id="legendStatus">Nessuna matricola selezionata.</div>
+
+  <!-- SEARCH -->
+  <div class="controls">
+    <label for="matricola">Inserisci la tua matricola</label>
+    <input id="matricola" type="text" placeholder="es. 7143724" autocomplete="off">
+    <ul id="suggestions"></ul>
+    <div id="legendStatus" class="legend">Nessuna matricola selezionata.</div>
+  </div>
+
+  <!-- STUDENT SUMMARY -->
+  <div class="panel" id="studentPanel" style="display:none">
+    <div class="matricola-label" id="studentID"></div>
+
+    <div class="results-grid">
+      <div>
+        <div class="legend">Modulo 1</div>
+        <div class="voto-label"><span id="resMod1"></span></div>
+      </div>
+      <div>
+        <div class="legend">Modulo 2</div>
+        <div class="voto-label"><span id="resMod2"></span></div>
+      </div>
+      <div>
+        <div class="legend">Totale</div>
+        <div class="voto-label"><span id="resTotal"></span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DISTRIBUTION -->
+  <div class="panel">
+    <h2>Distribuzione dei voti</h2>
+
+    <div class="tabs">
+      <button class="tab" data-mode="mod1">Modulo 1</button>
+      <button class="tab" data-mode="mod2">Modulo 2</button>
+      <button class="tab active" data-mode="total">Totale</button>
     </div>
 
-    <div class="grid">
-        <div class="panel">
-            <h2>Distribuzione dei voti (Results)</h2>
-            <canvas id="histChart"></canvas>
-            <div class="legend">Istogramma con media (verde) e voto selezionato (rosso).</div>
-        </div>
+    <canvas id="histChart"></canvas>
+    <div class="legend">Verde = media · Rosso = tuo voto</div>
+  </div>
 
-        <div class="panel">
-            <h2>Domande aperte 1–4</h2>
-            <canvas id="openScatter"></canvas>
-            <div class="legend">La linea verde è la media.</div>
-        </div>
+  <!-- QUESTION DETAILS -->
+  <div class="panel">
+    <h2>Dettaglio domande</h2>
 
-        <div class="panel">
-            <h2>Vero/Falso con giustificazione 5–12</h2>
-            <canvas id="vfScatter"></canvas>
-            <div class="legend">La linea verde è la media.</div>
-        </div>
+    <div class="tabs">
+      <button class="tab active" data-qmode="mod1">Modulo 1</button>
+      <button class="tab" data-qmode="mod2">Modulo 2</button>
     </div>
+
+    <div class="subsection">
+      <h3>Domande aperte</h3>
+      <canvas id="openQuestions"></canvas>
+    </div>
+
+    <div class="subsection">
+      <h3>Vero / Falso con giustificazione</h3>
+      <canvas id="vfQuestions"></canvas>
+    </div>
+  </div>
+
 </div>
 
 <footer>
-    <p>Created By RM</p>
+  <p>Created by RM</p>
 </footer>
 
 <script src="js/main.js"></script>
