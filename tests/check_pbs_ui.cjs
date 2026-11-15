@@ -115,7 +115,8 @@ const format = number => number.toLocaleString('it-IT', {minimumFractionDigits: 
     await page.evaluate(() => scrollTo(0, 0));
     await page.screenshot({path: path.join(root, 'PBS/anteprima_portale_mobile.png'), fullPage: true});
     const bodyText = await page.locator('body').innerText();
-    for (const forbidden of ['Solo punteggi.', 'Nessun nome', 'nessun commento', 'copiatur', 'originalità', 'TF-IDF', 'password', 'tracciamento', 'proiezione', 'coordinate', 'variabilità']) {
+    assert.equal(await page.locator('#updated-at, .reading-notes').count(), 0);
+    for (const forbidden of ['Solo punteggi.', 'Nessun nome', 'nessun commento', 'copiatur', 'originalità', 'TF-IDF', 'password', 'tracciamento', 'proiezione', 'coordinate', 'variabilità', 'Aggiornato il', 'I voti inferiori a 8 sono riuniti nella prima fascia.', 'Un totale, dodici domande', 'I risultati del gruppo']) {
       assert(!bodyText.toLowerCase().includes(forbidden.toLowerCase()), forbidden);
     }
     const mobile = await browser.newPage({viewport: {width: 390, height: 844}, isMobile: true, hasTouch: true, reducedMotion: 'reduce'});

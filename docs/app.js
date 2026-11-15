@@ -26,8 +26,6 @@
   byId('stat-mean').textContent = format(totals.reduce((sum, value) => sum + value, 0) / totals.length);
   byId('stat-median').textContent = format(median);
   byId('distribution-count').textContent = `${integer(active.length)} compiti`;
-  const date = new Date(`${data.updatedAt}T12:00:00`);
-  byId('updated-at').textContent = `Aggiornato il ${date.toLocaleDateString('it-IT', {day: 'numeric', month: 'short', year: 'numeric'})}`;
 
   const bins = [{label: '< 8', description: 'Voti inferiori a 8', low: -Infinity, high: 8}, ...Array.from({length: 8}, (_, i) => ({label: `${i + 8}–${i + 9}`, description: i === 7 ? 'Da 15 a 16, incluso' : `Da ${i + 8} a meno di ${i + 9}`, low: i + 8, high: i === 7 ? Infinity : i + 9}))];
   const indexFor = score => score < 8 ? 0 : Math.min(8, Math.floor(score) - 7);
