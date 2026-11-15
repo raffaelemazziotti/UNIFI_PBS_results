@@ -6,6 +6,13 @@ const vm = require('node:vm');
 const {pathToFileURL} = require('node:url');
 
 const root = path.resolve(__dirname, '..');
+const savePreviews = process.env.PBS_SAVE_PREVIEWS === '1';
+async function preview(target, filename, options = {}) {
+  if (!savePreviews) return;
+  const directory = path.join(root, 'PBS', 'previews');
+  fs.mkdirSync(directory, {recursive: true});
+  await target.screenshot({path: path.join(directory, filename), ...options});
+}
 const sandbox = {window: {}};
 vm.runInNewContext(fs.readFileSync(path.join(root, 'docs/data.js'), 'utf8'), sandbox);
 const data = JSON.parse(JSON.stringify(sandbox.window.PBS_DATA));
@@ -74,8 +81,7 @@ const format = number => number.toLocaleString('it-IT', {minimumFractionDigits: 
       assert.equal(await page.locator(`[data-question="${i + 1}"] .question-grade`).textContent(), `${format(ordinary.voti[i])} / ${i < 4 ? 2 : 1}`);
     }
 
-    fs.mkdirSync(path.join(root, 'PBS'), {recursive: true});
-    await page.screenshot({path: path.join(root, 'PBS/anteprima_portale_risultato.png'), fullPage: true});
+    await preview(page, 'risultato.png', {fullPage: true});
     const lows = active.filter(student => sum(student) < 8);
     assert.equal(lows.length, 5);
     for (const student of lows) {
@@ -105,7 +111,7 @@ const format = number => number.toLocaleString('it-IT', {minimumFractionDigits: 
     }
     await page.locator('#hide-result').click();
     await page.evaluate(() => scrollTo(0, 0));
-    await page.screenshot({path: path.join(root, 'PBS/anteprima_portale_desktop.png'), fullPage: true});
+    await preview(page, 'desktop.png', {fullPage: true});
     for (const width of [320, 375, 390, 768, 1024, 1440]) {
       await page.setViewportSize({width, height: 900});
       const dimensions = await page.evaluate(() => ({content: document.documentElement.scrollWidth, viewport: innerWidth}));
@@ -113,7 +119,7 @@ const format = number => number.toLocaleString('it-IT', {minimumFractionDigits: 
     }
     await page.setViewportSize({width: 390, height: 844});
     await page.evaluate(() => scrollTo(0, 0));
-    await page.screenshot({path: path.join(root, 'PBS/anteprima_portale_mobile.png'), fullPage: true});
+    await preview(page, 'mobile.png', {fullPage: true});
     const bodyText = await page.locator('body').innerText();
     assert.equal(await page.locator('#updated-at, .reading-notes').count(), 0);
     for (const forbidden of ['Solo punteggi.', 'Nessun nome', 'nessun commento', 'copiatur', 'originalità', 'TF-IDF', 'password', 'tracciamento', 'proiezione', 'coordinate', 'variabilità', 'Aggiornato il', 'I voti inferiori a 8 sono riuniti nella prima fascia.', 'Un totale, dodici domande', 'I risultati del gruppo']) {
@@ -129,7 +135,7 @@ const format = number => number.toLocaleString('it-IT', {minimumFractionDigits: 
     assert.equal(await mobile.locator('#map-tooltip').isVisible(), true);
     const tooltipBounds = await mobile.locator('#map-tooltip').boundingBox();
     assert(tooltipBounds.x >= 0 && tooltipBounds.x + tooltipBounds.width <= 390);
-    await mobile.locator('#somiglianze').screenshot({path: path.join(root, 'PBS/anteprima_mappa_selezionata_mobile.png')});
+    await preview(mobile.locator('#somiglianze'), 'mappa_mobile.png');
     await mobile.close();
     const ids = await page.locator('[id]').evaluateAll(elements => elements.map(element => element.id));
     assert.equal(new Set(ids).size, ids.length);

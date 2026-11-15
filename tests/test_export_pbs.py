@@ -2,7 +2,6 @@
 import importlib.util
 import json
 from pathlib import Path
-import tempfile
 import unittest
 from unittest.mock import patch
 
@@ -30,12 +29,9 @@ class ExportTests(unittest.TestCase):
     def test_dati_pubblici_allowlist_e_ritiro(self):
         rows = [fake_row(1), fake_row(2)]
         rows[1]['E'] = 'Ritirato'
-        with tempfile.TemporaryDirectory() as temp:
-            path = Path(temp)/'source.xlsx'
-            path.touch()
-            with patch.object(export, 'read_rows', return_value=rows):
-                data = export.make_data(path)
-        self.assertEqual(set(data), {'updatedAt', 'students', 'similarity'})
+        with patch.object(export, 'read_rows', return_value=rows):
+            data = export.make_data()
+        self.assertEqual(set(data), {'students', 'similarity'})
         self.assertEqual(set(data['students'][0]), {'matricola', 'voti'})
         self.assertEqual(set(data['students'][1]), {'matricola', 'ritirato'})
         self.assertEqual(sum(data['students'][0]['voti']), 8)

@@ -5,7 +5,6 @@ The workbook and all answer text remain in the ignored PBS directory.
 """
 import argparse
 from collections import Counter
-import datetime as dt
 import json
 import math
 from pathlib import Path
@@ -13,7 +12,6 @@ import re
 import unicodedata
 import zipfile
 import xml.etree.ElementTree as ET
-from zoneinfo import ZoneInfo
 
 import numpy as np
 from sklearn.manifold import MDS
@@ -34,7 +32,7 @@ risposta domanda caso ad esempio quello quella quelle quelli'''.split())
 
 def read_rows(path):
     with zipfile.ZipFile(path) as archive:
-        strings = [''.join(node.itertext()) for node in []]
+        strings = []
         if 'xl/sharedStrings.xml' in archive.namelist():
             strings = [''.join(t.text or '' for t in si.findall('.//m:t', NS))
                        for si in ET.fromstring(archive.read('xl/sharedStrings.xml'))]
@@ -74,8 +72,7 @@ def similarity_projection(rows):
     """Question-aligned TF-IDF; metric MDS fits all pairwise cosine distances.
 
     Export coordinates linked to matricole, never answer text or vocabulary.
-    Metric MDS approximates the original dissimilarities globally; unlike t-SNE,
-    its objective is to preserve actual distances, not neighborhood probabilities.
+    Metric MDS approximates the original pairwise dissimilarities globally.
     """
     n = len(rows)
     if n < 2:
@@ -133,8 +130,7 @@ def make_data(path=SOURCE):
                 raise ValueError('Voto mancante o fuori scala nel file sorgente.')
         students.append({'matricola': identifier, 'voti': scores})
         active.append(row)
-    updated = dt.datetime.fromtimestamp(path.stat().st_mtime, ZoneInfo('Europe/Rome')).date().isoformat()
-    return {'updatedAt': updated, 'students': sorted(students, key=lambda student: student['matricola']),
+    return {'students': sorted(students, key=lambda student: student['matricola']),
             'similarity': similarity_projection(active)}
 
 

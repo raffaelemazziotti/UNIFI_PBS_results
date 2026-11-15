@@ -1,6 +1,5 @@
 // Dati pubblici autorizzati: matricole e punteggi; nessun nome, risposta o commento.
 window.PBS_DATA = {
-  "updatedAt": "2026-11-15",
   "students": [
     {
       "matricola": "7136178",

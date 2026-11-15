@@ -41,8 +41,8 @@ Il repository non viene pubblicato automaticamente. Per GitHub Pages, quando si 
 ## Verifiche
 
 ```sh
-PYTHONNOUSERSITE=1 python3 -m unittest discover -s tests -p 'test_*.py'
+PYTHONDONTWRITEBYTECODE=1 PYTHONNOUSERSITE=1 python3 -m unittest discover -s tests -p 'test_*.py'
 node tests/check_pbs_ui.cjs
 ```
 
-Il test browser richiede Playwright con Chromium installato nell’ambiente di sviluppo. In alternativa indicare il percorso del modulo con `PLAYWRIGHT_MODULE`. Verifica ricerca, punteggi, ritiro, fascia aggregata, accessibilità di base, assenza di richieste esterne e layout mobile. Le anteprime sono salvate solo sotto `PBS/`.
+Il test browser richiede Playwright con Chromium installato nell’ambiente di sviluppo. In alternativa indicare il percorso del modulo con `PLAYWRIGHT_MODULE`. Verifica ricerca, punteggi, ritiro, fascia aggregata, accessibilità di base, assenza di richieste esterne e layout mobile. Non genera file per impostazione predefinita; per salvare le anteprime in `PBS/previews/`, eseguirlo con `PBS_SAVE_PREVIEWS=1`.

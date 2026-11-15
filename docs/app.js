@@ -27,7 +27,7 @@
   byId('stat-median').textContent = format(median);
   byId('distribution-count').textContent = `${integer(active.length)} compiti`;
 
-  const bins = [{label: '< 8', description: 'Voti inferiori a 8', low: -Infinity, high: 8}, ...Array.from({length: 8}, (_, i) => ({label: `${i + 8}–${i + 9}`, description: i === 7 ? 'Da 15 a 16, incluso' : `Da ${i + 8} a meno di ${i + 9}`, low: i + 8, high: i === 7 ? Infinity : i + 9}))];
+  const bins = [{label: '< 8', description: 'Voti inferiori a 8'}, ...Array.from({length: 8}, (_, i) => ({label: `${i + 8}–${i + 9}`, description: i === 7 ? 'Da 15 a 16, incluso' : `Da ${i + 8} a meno di ${i + 9}`}))];
   const indexFor = score => score < 8 ? 0 : Math.min(8, Math.floor(score) - 7);
   bins.forEach((bin, index) => { bin.count = totals.filter(score => indexFor(score) === index).length; });
   const ceiling = Math.ceil((Math.max(...bins.map(bin => bin.count)) + 3) / 6) * 6;
