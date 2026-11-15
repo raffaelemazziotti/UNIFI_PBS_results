@@ -1,0 +1,11 @@
+# Exam materials and student submissions must remain local.
+PBS/
+
+# Local development and test output.
+__pycache__/
+*.py[cod]
+node_modules/
+.venv/
+.pytest_cache/
+test-results/
+playwright-report/
