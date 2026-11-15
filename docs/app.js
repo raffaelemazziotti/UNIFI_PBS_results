@@ -83,16 +83,60 @@
   }
 
   const svgNS = 'http://www.w3.org/2000/svg';
+  const mapPoints = new Map();
+  const tooltip = byId('map-tooltip');
+  function hideMapTooltip() { tooltip.hidden = true; }
+  function showMapTooltip(group, point) {
+    tooltip.textContent = `Matricola ${point.matricola}${group.classList.contains('selected') ? ' · Il tuo compito' : ''}`;
+    tooltip.hidden = false;
+    const stage = document.querySelector('.map-stage').getBoundingClientRect();
+    const anchor = group.getBoundingClientRect();
+    const width = tooltip.offsetWidth;
+    const height = tooltip.offsetHeight;
+    const left = Math.max(8, Math.min(stage.width - width - 8, anchor.left + anchor.width / 2 - stage.left - width / 2));
+    const top = Math.max(8, Math.min(stage.height - height - 8, anchor.top - stage.top - height - 8));
+    tooltip.style.left = `${left}px`;
+    tooltip.style.top = `${top}px`;
+  }
   data.similarity.points.forEach(point => {
-    const circle = document.createElementNS(svgNS, 'circle');
+    const group = document.createElementNS(svgNS, 'g');
+    group.classList.add('map-point');
+    group.dataset.matricola = point.matricola;
+    group.setAttribute('role', 'button');
+    group.setAttribute('tabindex', '0');
+    group.setAttribute('aria-label', `Matricola ${point.matricola}`);
     // Use one scale for both axes: do not distort pairwise geometry.
-    circle.setAttribute('cx', (300 + point[0] * 340).toFixed(3));
-    circle.setAttribute('cy', (210 - point[1] * 340).toFixed(3));
-    circle.setAttribute('r', '4.5');
-    byId('map-points').append(circle);
+    group.setAttribute('transform', `translate(${(300 + point.x * 340).toFixed(3)} ${(210 - point.y * 340).toFixed(3)})`);
+    const hit = document.createElementNS(svgNS, 'circle');
+    hit.classList.add('map-hit'); hit.setAttribute('r', '12'); hit.setAttribute('aria-hidden', 'true');
+    const dot = document.createElementNS(svgNS, 'circle');
+    dot.classList.add('map-dot'); dot.setAttribute('r', '4.5'); dot.setAttribute('aria-hidden', 'true');
+    group.append(hit, dot);
+    group.addEventListener('pointerenter', () => showMapTooltip(group, point));
+    group.addEventListener('pointerleave', () => {if (document.activeElement !== group) hideMapTooltip();});
+    group.addEventListener('focus', () => showMapTooltip(group, point));
+    group.addEventListener('blur', hideMapTooltip);
+    group.addEventListener('click', () => showMapTooltip(group, point));
+    group.addEventListener('keydown', event => {
+      if (event.key === 'Enter' || event.key === ' ') {event.preventDefault(); showMapTooltip(group, point);}
+    });
+    mapPoints.set(point.matricola, group);
+    byId('map-points').append(group);
   });
   byId('map-count').textContent = `${integer(data.similarity.points.length)} compiti`;
-  byId('projection-variance').textContent = `La mappa mantiene in media il ${format(data.similarity.neighborPreservation * 100)}% dei dieci vicini più prossimi di ogni compito. Non conserva tutte le relazioni: le distanze e gli spazi fra gruppi non sono misure esatte.`;
+  document.addEventListener('pointerdown', event => {if (!event.target.closest('.map-point')) hideMapTooltip();});
+  document.addEventListener('keydown', event => {if (event.key === 'Escape') hideMapTooltip();});
+  window.addEventListener('resize', hideMapTooltip);
+  function selectMapStudent(matricola) {
+    hideMapTooltip();
+    for (const [id, group] of mapPoints) {
+      const selected = id === matricola;
+      group.classList.toggle('selected', selected);
+      group.setAttribute('aria-label', `Matricola ${id}${selected ? ', il tuo compito' : ''}`);
+    }
+    byId('map-selected-legend').hidden = !matricola || !mapPoints.has(matricola);
+    if (mapPoints.has(matricola)) byId('map-points').append(mapPoints.get(matricola));
+  }
 
   const topics = ['Glia radiale', 'BDNF e periodo critico', 'Cure materne e grafici HPA', 'Cognizione prenatale', 'Ormoni e comportamento materno', 'Conditioned head turning', 'Nodi di Ranvier', 'Deprivazione monoculare', 'Harlow e base sicura', 'Patterning telencefalico', 'Disparità retinica', 'Pratica motoria e M1'];
   function clearChartSelection() {
@@ -104,6 +148,7 @@
     byId('open-scores').replaceChildren();
     byId('tf-scores').replaceChildren();
     clearChartSelection();
+    selectMapStudent(null);
   }
   function showStudent(student) {
     resetResult();
@@ -117,10 +162,11 @@
       byId('open-total').textContent = format(student.voti.slice(0, 4).reduce((sum, value) => sum + value, 0));
       byId('tf-total').textContent = format(student.voti.slice(4).reduce((sum, value) => sum + value, 0));
       const binIndex = indexFor(score);
-      byId('student-bin').textContent = binIndex === 0 ? 'Nella distribuzione, il tuo compito è nella fascia «< 8», senza una posizione interna alla fascia.' : `Nella distribuzione, il tuo compito è nella fascia «${bins[binIndex].label}».`;
+      byId('student-bin').textContent = `Il tuo compito si trova nella fascia «${bins[binIndex].label}».`;
       byId('selected-bin-text').textContent = `Il tuo intervallo: ${bins[binIndex].label} · ${integer(bins[binIndex].count)} compiti nella stessa fascia`;
       byId('selected-bin').hidden = false;
       document.querySelector(`.bin-column[data-bin="${binIndex}"]`).classList.add('selected');
+      selectMapStudent(student.matricola);
       student.voti.forEach((value, index) => {
         const maximum = index < 4 ? 2 : 1;
         const row = document.createElement('div');

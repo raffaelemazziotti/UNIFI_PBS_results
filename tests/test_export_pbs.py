@@ -55,16 +55,31 @@ class ExportTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 export.make_data()
 
-    def test_proiezione_deterministica_senza_identificatori(self):
+    def test_proiezione_deterministica_collegata_alle_matricole(self):
         rows = [fake_row(1), fake_row(2, 'ormoni circuiti inibitori apprendimento'), fake_row(3, 'memoria riconoscimento voce prenatale'), fake_row(4, 'glia guida migrazione neuroni')]
         first = export.similarity_projection(rows)
         self.assertEqual(first, export.similarity_projection(rows))
-        self.assertEqual(set(first), {'points', 'neighborPreservation'})
+        self.assertEqual(set(first), {'points'})
         self.assertEqual(len(first['points']), 4)
-        self.assertTrue(np.isfinite(first['points']).all())
-        self.assertTrue((np.abs(first['points']) <= .500001).all())
-        self.assertTrue(0 <= first['neighborPreservation'] <= 1)
-        self.assertEqual(first['points'], sorted(first['points']))
+        self.assertEqual([p['matricola'] for p in first['points']], [f'{i:07}' for i in range(1, 5)])
+        coordinates = [[p['x'], p['y']] for p in first['points']]
+        self.assertTrue(np.isfinite(coordinates).all())
+        self.assertTrue((np.abs(coordinates) <= .500001).all())
+        for point in first['points']:
+            self.assertEqual(set(point), {'matricola', 'x', 'y'})
+
+    def test_compiti_identici_sono_piu_vicini(self):
+        rows = [fake_row(1), fake_row(2), fake_row(3, 'ormoni recettori memoria apprendimento')]
+        points = export.similarity_projection(rows)['points']
+        coordinates = np.array([[p['x'], p['y']] for p in points])
+        same = np.linalg.norm(coordinates[0] - coordinates[1])
+        different = np.linalg.norm(coordinates[0] - coordinates[2])
+        self.assertLess(same, .001)
+        self.assertGreater(different, .9)
+
+    def test_gruppo_di_compiti_identici(self):
+        points = export.similarity_projection([fake_row(1), fake_row(2), fake_row(3)])['points']
+        self.assertTrue(all(point['x'] == point['y'] == 0 for point in points))
 
 
 if __name__ == '__main__':

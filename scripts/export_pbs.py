@@ -1,4 +1,4 @@
-"""Export only authorized student identifiers, scores and unlabelled coordinates.
+"""Export authorized student identifiers, scores and similarity coordinates.
 
 Run with: PYTHONNOUSERSITE=1 python3 scripts/export_pbs.py
 The workbook and all answer text remain in the ignored PBS directory.
@@ -16,7 +16,7 @@ import xml.etree.ElementTree as ET
 from zoneinfo import ZoneInfo
 
 import numpy as np
-from sklearn.manifold import TSNE
+from sklearn.manifold import MDS
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / 'PBS' / 'PBS parziale modulo correzione 1 26_27.xlsx'
@@ -71,14 +71,15 @@ def normalise_identifier(value):
 
 
 def similarity_projection(rows):
-    """Question-aligned TF-IDF; equal weight per question; local t-SNE projection.
+    """Question-aligned TF-IDF; metric MDS fits all pairwise cosine distances.
 
-    Only the 2D projection is exported. No text, vocabulary, distances, row IDs,
-    student identifiers or correspondence between students and points is exported.
+    Export coordinates linked to matricole, never answer text or vocabulary.
+    Metric MDS approximates the original dissimilarities globally; unlike t-SNE,
+    its objective is to preserve actual distances, not neighborhood probabilities.
     """
     n = len(rows)
-    if n < 3:
-        return {'points': [[0.0, 0.0] for _ in rows], 'neighborPreservation': 0.0}
+    if n < 2:
+        return {'points': [{'matricola': normalise_identifier(row['C']), 'x': 0.0, 'y': 0.0} for row in rows]}
     kernel = np.zeros((n, n), dtype=float)
     for column in ANSWER_COLS:
         documents = []
@@ -98,24 +99,19 @@ def similarity_projection(rows):
     lengths = np.sqrt(np.diag(kernel))
     normaliser = lengths[:, None] * lengths[None, :]
     kernel = np.divide(kernel, normaliser, out=np.zeros_like(kernel), where=normaliser > 0)
-    distances = np.sqrt(np.maximum(2 * (1 - kernel), 0))
+    distances = np.clip(1 - kernel, 0, 1)
     np.fill_diagonal(distances, 0)
-    coordinates = TSNE(n_components=2, metric='precomputed', init='random',
-                       perplexity=min(20, max(1, (n - 1) / 3)), random_state=42,
-                       learning_rate='auto', max_iter=1000, method='exact', n_jobs=1).fit_transform(distances)
-    # Disclose how many immediate neighbours survive this exploratory projection.
-    k = min(10, n - 1)
-    projected_distances = np.linalg.norm(coordinates[:, None, :] - coordinates[None, :, :], axis=2)
-    np.fill_diagonal(projected_distances, np.inf)
-    np.fill_diagonal(distances, np.inf)
-    original_neighbors = np.argsort(distances, axis=1)[:, :k]
-    projected_neighbors = np.argsort(projected_distances, axis=1)[:, :k]
-    agreement = np.mean([len(set(a) & set(b)) / k for a, b in zip(original_neighbors, projected_neighbors)])
+    if np.max(distances) < 1e-12:
+        coordinates = np.zeros((n, 2))
+    else:
+        coordinates = MDS(n_components=2, metric=True, dissimilarity='precomputed',
+                          n_init=8, max_iter=1500, eps=1e-7, random_state=42,
+                          n_jobs=1).fit_transform(distances)
     span = max(float(np.ptp(coordinates[:, 0])), float(np.ptp(coordinates[:, 1])), 1e-12)
     coordinates = (coordinates - (coordinates.max(axis=0) + coordinates.min(axis=0)) / 2) / span
-    # Sorting by coordinates removes the original row order and any ID association.
-    points = sorted([[round(float(x), 6), round(float(y), 6)] for x, y in coordinates])
-    return {'points': points, 'neighborPreservation': round(float(agreement), 6)}
+    points = [{'matricola': normalise_identifier(row['C']), 'x': round(float(x), 6), 'y': round(float(y), 6)}
+              for row, (x, y) in zip(rows, coordinates)]
+    return {'points': sorted(points, key=lambda point: point['matricola'])}
 
 
 def make_data(path=SOURCE):
@@ -158,7 +154,7 @@ def main():
         print('Dati pubblici allineati al workbook; nessun dato identificativo oltre alle matricole.')
     else:
         DESTINATION.write_text(content, encoding='utf-8')
-        print(f'Esportati {len(data["students"])} record e {len(data["similarity"]["points"])} punti senza etichette in docs/data.js.')
+        print(f'Esportati {len(data["students"])} record e {len(data["similarity"]["points"])} punti collegati alle matricole in docs/data.js.')
 
 
 if __name__ == '__main__':

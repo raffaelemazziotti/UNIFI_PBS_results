@@ -16,6 +16,7 @@ const format = number => number.toLocaleString('it-IT', {minimumFractionDigits: 
 (async () => {
   assert.equal(data.students.length, 98);
   assert.equal(active.length, 97);
+  assert.deepEqual(data.similarity.points.map(point => point.matricola).sort(), active.map(student => student.matricola).sort());
   for (const student of data.students) {
     assert.deepEqual(Object.keys(student).sort(), student.ritirato ? ['matricola', 'ritirato'] : ['matricola', 'voti']);
     assert(/^[A-Z0-9]+$/.test(student.matricola));
@@ -33,7 +34,18 @@ const format = number => number.toLocaleString('it-IT', {minimumFractionDigits: 
     assert.equal(await page.locator('#stat-count').textContent(), '97');
     assert.equal(await page.locator('#stat-mean').textContent(), '12,7');
     assert.equal(await page.locator('#stat-median').textContent(), '13,7');
-    assert.equal(await page.locator('#map-points circle').count(), 97);
+    assert.equal(await page.locator('#map-points .map-point').count(), 97);
+    assert.equal(await page.locator('#map-points .map-dot').count(), 97);
+    const mapPoint = page.locator('.map-point').last();
+    const hoveredId = await mapPoint.getAttribute('data-matricola');
+    await mapPoint.hover();
+    assert.equal(await page.locator('#map-tooltip').textContent(), `Matricola ${hoveredId}`);
+    assert.equal(await page.locator('#map-tooltip').isVisible(), true);
+    await mapPoint.focus();
+    await mapPoint.press('Enter');
+    assert.equal(await page.locator('#map-tooltip').isVisible(), true);
+    await mapPoint.press('Escape');
+    assert.equal(await page.locator('#map-tooltip').isVisible(), false);
     assert.equal(await page.locator('#student-result').isVisible(), false);
     const counts = await page.locator('.bar-count').allTextContents();
     assert.equal(counts.reduce((a, b) => a + Number(b), 0), 97);
@@ -53,6 +65,9 @@ const format = number => number.toLocaleString('it-IT', {minimumFractionDigits: 
     assert.equal(await page.locator('#open-scores .question-row').count(), 4);
     assert.equal(await page.locator('#tf-scores .question-row').count(), 8);
     assert.equal(await page.locator('.bin-column.selected').count(), 1);
+    assert.equal(await page.locator('.map-point.selected').count(), 1);
+    assert.equal(await page.locator('.map-point.selected').getAttribute('data-matricola'), ordinary.matricola);
+    assert.equal(await page.locator('#map-selected-legend').isVisible(), true);
     assert.equal(await page.locator('#result-title').evaluate(el => el === document.activeElement), true);
     assert(!page.url().includes(ordinary.matricola));
     for (let i = 0; i < 12; i++) {
@@ -67,13 +82,15 @@ const format = number => number.toLocaleString('it-IT', {minimumFractionDigits: 
       await page.locator('#matricola').fill(student.matricola);
       await page.locator('#matricola').press('Enter');
       assert.equal(await page.locator('.bin-column.selected').getAttribute('data-bin'), '0');
-      assert.match(await page.locator('#student-bin').textContent(), /senza una posizione interna/);
+      assert.match(await page.locator('#student-bin').textContent(), /fascia «< 8»/);
+      assert.equal(await page.locator('.map-point.selected').getAttribute('data-matricola'), student.matricola);
     }
     await page.locator('#matricola').fill(data.students.find(student => student.ritirato).matricola);
     await page.locator('#matricola').press('Enter');
     assert.equal(await page.locator('#withdrawn-notice').isVisible(), true);
     assert.equal(await page.locator('#score-detail').isVisible(), false);
     assert.equal(await page.locator('.bin-column.selected').count(), 0);
+    assert.equal(await page.locator('.map-point.selected').count(), 0);
     await page.locator('#hide-result').click();
     assert.equal(await page.locator('#student-result').isVisible(), false);
     assert.equal(await page.locator('#matricola').inputValue(), '');
@@ -84,6 +101,7 @@ const format = number => number.toLocaleString('it-IT', {minimumFractionDigits: 
       await page.locator('#matricola').press('Enter');
       assert.equal(await page.locator('#student-total').textContent(), format(sum(student)));
       assert.equal(await page.locator('.question-row').count(), 12);
+      assert.equal(await page.locator('.map-point.selected').getAttribute('data-matricola'), student.matricola);
     }
     await page.locator('#hide-result').click();
     await page.evaluate(() => scrollTo(0, 0));
@@ -96,12 +114,28 @@ const format = number => number.toLocaleString('it-IT', {minimumFractionDigits: 
     await page.setViewportSize({width: 390, height: 844});
     await page.evaluate(() => scrollTo(0, 0));
     await page.screenshot({path: path.join(root, 'PBS/anteprima_portale_mobile.png'), fullPage: true});
+    const bodyText = await page.locator('body').innerText();
+    for (const forbidden of ['Solo punteggi.', 'Nessun nome', 'nessun commento', 'copiatur', 'originalità', 'TF-IDF', 'password', 'tracciamento', 'proiezione', 'coordinate', 'variabilità']) {
+      assert(!bodyText.toLowerCase().includes(forbidden.toLowerCase()), forbidden);
+    }
+    const mobile = await browser.newPage({viewport: {width: 390, height: 844}, isMobile: true, hasTouch: true, reducedMotion: 'reduce'});
+    mobile.on('pageerror', error => errors.push(error.message));
+    await mobile.goto(pathToFileURL(path.join(root, 'docs/index.html')).href);
+    await mobile.locator('#matricola').fill(ordinary.matricola);
+    await mobile.locator('#matricola').press('Enter');
+    await mobile.locator('.map-point.selected').tap();
+    assert.equal(await mobile.locator('#map-tooltip').textContent(), `Matricola ${ordinary.matricola} · Il tuo compito`);
+    assert.equal(await mobile.locator('#map-tooltip').isVisible(), true);
+    const tooltipBounds = await mobile.locator('#map-tooltip').boundingBox();
+    assert(tooltipBounds.x >= 0 && tooltipBounds.x + tooltipBounds.width <= 390);
+    await mobile.locator('#somiglianze').screenshot({path: path.join(root, 'PBS/anteprima_mappa_selezionata_mobile.png')});
+    await mobile.close();
     const ids = await page.locator('[id]').evaluateAll(elements => elements.map(element => element.id));
     assert.equal(new Set(ids).size, ids.length);
     assert.equal(await page.evaluate(() => localStorage.length), 0);
     assert.equal(await page.evaluate(() => sessionStorage.length), 0);
     assert.deepEqual(external, []);
     assert.deepEqual(errors, []);
-    console.log('Browser OK: 98 matricole, 97 dettagli, 12 voti, ritiro, fascia <8 aggregata, grafici, tastiera, responsive 320–1440px; nessuna richiesta esterna.');
+    console.log('Browser OK: 98 matricole, 97 dettagli e punti collegati, hover, selezione, tocco mobile, 12 voti, ritiro e responsive 320–1440px.');
   } finally {await browser.close();}
 })().catch(error => {console.error(error); process.exit(1);});

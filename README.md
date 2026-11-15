@@ -25,9 +25,9 @@ Il generatore aggiorna `docs/data.js`. Dopo modifiche ai voti nell’XLSX, rigen
 
 ## Mappa delle somiglianze
 
-Il generatore confronta localmente parole e coppie di parole delle risposte alla stessa domanda, con pesi TF-IDF. Le dodici domande hanno lo stesso peso prima della normalizzazione per compito. Le distanze associate alla somiglianza coseno complessiva sono proiettate in due dimensioni con t-SNE (seed fisso, perplexity 20 per il gruppo attuale), privilegiando le vicinanze locali.
+Il generatore confronta localmente parole e coppie di parole delle risposte alla stessa domanda, con pesi TF-IDF. Le dodici domande hanno lo stesso peso prima della normalizzazione per compito. La dissimilarità è `1 − somiglianza coseno`; il posizionamento usa MDS metrica, con otto inizializzazioni e seed fisso, minimizzando l’errore sulle distanze di tutte le coppie. La scala grafica è uguale sui due assi.
 
-Sono esportate soltanto le coordinate bidimensionali, ordinate per coordinate, senza corrispondenza con matricole o righe del workbook. I punti non sono colorati per voto. La pagina riporta la percentuale media dei dieci vicini più prossimi mantenuti dalla proiezione: la mappa è esplorativa e non conserva tutte le distanze. Le distanze fra gruppi non hanno un significato metrico preciso. Lessico del corso, lunghezza e completezza delle risposte possono influenzarla. **Non è un rilevatore di copiatura, originalità o uso di LLM.**
+Le coordinate sono collegate alle matricole: il passaggio del mouse, il focus da tastiera e il tocco mostrano la matricola. La ricerca evidenzia il proprio compito. I punti non sono colorati per voto. Risposte e vocabolario non sono esportati. Le distanze in due dimensioni approssimano, senza riprodurle esattamente, le differenze testuali originali; lessico del corso, lunghezza e completezza delle risposte possono influenzarle. Questi dettagli metodologici sono nella documentazione, non nella pagina rivolta agli studenti.
 
 ## Riservatezza e versionamento
 
