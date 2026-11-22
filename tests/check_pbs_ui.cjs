@@ -29,7 +29,7 @@ const format = number => number.toLocaleString('it-IT', {minimumFractionDigits: 
     assert(/^[A-Z0-9]+$/.test(student.matricola));
     if (!student.ritirato) assert.equal(student.voti.length, 12);
   }
-  const browser = await chromium.launch({headless: true});
+  const browser = await chromium.launch({headless: true, ...(process.env.PBS_BROWSER_EXECUTABLE ? {executablePath: process.env.PBS_BROWSER_EXECUTABLE} : {})});
   try {
     const page = await browser.newPage({viewport: {width: 1440, height: 1080}, reducedMotion: 'reduce'});
     const errors = []; const external = [];
@@ -38,6 +38,13 @@ const format = number => number.toLocaleString('it-IT', {minimumFractionDigits: 
     await page.goto(pathToFileURL(path.join(root, 'docs/index.html')).href);
     await page.waitForFunction(() => document.querySelectorAll('.bin-column').length === 9);
     assert.equal(await page.title(), 'PBS modulo 1');
+    assert.equal(await page.locator('h1').textContent(), 'PBS modulo 1');
+    assert.equal(await page.locator('.hero-copy > p').count(), 0);
+    assert.equal(await page.locator('.brand-mark').getAttribute('src'), 'icon.svg');
+    assert.equal(await page.locator('.brand-mark').evaluate(image => image.complete && image.naturalWidth > 0), true);
+    assert.equal(await page.locator('body').evaluate(body => getComputedStyle(body).fontSize), '16px');
+    assert.equal(await page.locator('.site-header').evaluate(header => getComputedStyle(header).backgroundColor), 'rgb(18, 59, 46)');
+    assert.equal(await page.locator('.academic-year').textContent(), 'A.A. 2026/27');
     assert.equal(await page.locator('#stat-count').textContent(), '97');
     assert.equal(await page.locator('#stat-mean').textContent(), '12,7');
     assert.equal(await page.locator('#stat-median').textContent(), '13,7');
@@ -116,6 +123,11 @@ const format = number => number.toLocaleString('it-IT', {minimumFractionDigits: 
       await page.setViewportSize({width, height: 900});
       const dimensions = await page.evaluate(() => ({content: document.documentElement.scrollWidth, viewport: innerWidth}));
       assert(dimensions.content <= dimensions.viewport + 1, `Overflow at ${width}px`);
+      await page.locator('#matricola').fill(ordinary.matricola);
+      await page.locator('#matricola').press('Enter');
+      const resultDimensions = await page.evaluate(() => ({content: document.documentElement.scrollWidth, viewport: innerWidth}));
+      assert(resultDimensions.content <= resultDimensions.viewport + 1, `Result overflow at ${width}px`);
+      await page.locator('#hide-result').click();
     }
     await page.setViewportSize({width: 390, height: 844});
     await page.evaluate(() => scrollTo(0, 0));

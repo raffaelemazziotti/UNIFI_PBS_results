@@ -46,7 +46,12 @@
     count.textContent = integer(bin.count);
     const label = document.createElement('span');
     label.className = 'bar-label';
-    label.textContent = bin.label;
+    if (bin.label.includes('–')) {
+      const [from, to] = bin.label.split('–');
+      const lower = document.createElement('span'); lower.textContent = `${from}–`;
+      const upper = document.createElement('span'); upper.textContent = to;
+      label.append(lower, upper);
+    } else label.textContent = bin.label;
     bar.append(count);
     column.append(bar, label);
     byId('histogram-bars').append(column);

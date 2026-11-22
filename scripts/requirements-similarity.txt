@@ -1,0 +1,6 @@
+# CPU-only local inference. No student text is sent to a remote service.
+numpy==1.26.4
+scipy==1.13.1
+scikit-learn==1.5.1
+onnxruntime==1.23.2
+tokenizers==0.22.2
